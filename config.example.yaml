@@ -1,0 +1,58 @@
+# Global Kafka configuration
+kafka:
+  bootstrap_servers: "localhost:9092"
+  security_protocol: "SASL_PLAINTEXT"
+  sasl_mechanism: "PLAIN"
+  sasl_username: "user"
+  sasl_password: "pass"
+  default_topic: "telemetry"
+
+# Global file output configuration
+file_output:
+  directory: "./data"
+  rolling: "hourly"          # or daily
+
+# Error log configuration
+error_log:
+  directory: "./logs"
+  rolling: "daily"
+  max_age_days: 7
+
+# Data dictionaries
+dictionaries:
+  ships:
+    file: "./data/ships.csv"
+    columns:
+      id: 0          # 第0列是ship_id
+      type: 1        # 第1列是ship_type（可选）
+
+# Single Producer definition
+producer:
+  name: telemetry-producer
+  rate: 1          # 每秒1条
+  output: kafka
+  kafka_topic: ship_telemetry   # 覆盖全局topic
+  fields:
+    - name: ship_id
+      type: string
+      rule: random_from_dictionary
+      dictionary: ships
+      dictionary_column: id
+    - name: timestamp
+      type: long
+      rule: now
+    - name: speed
+      type: double
+      rule: random_range
+      min: 10.0
+      max: 25.0
+    - name: wave_height
+      type: double
+      rule: random_range
+      min: 0.5
+      max: 6.0
+    - name: wind_speed
+      type: double
+      rule: random_range
+      min: 0
+      max: 30
