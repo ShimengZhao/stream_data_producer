@@ -71,7 +71,9 @@ class SingleProducerManager:
                     security_protocol=self.config.kafka.security_protocol,
                     sasl_mechanism=self.config.kafka.sasl_mechanism,
                     sasl_username=self.config.kafka.sasl_username,
-                    sasl_password=self.config.kafka.sasl_password
+                    sasl_password=self.config.kafka.sasl_password,
+                    key_field=getattr(self.config.kafka, 'key_field', None),
+                    key_strategy=getattr(self.config.kafka, 'key_strategy', 'field')
                 )
             
             print(f"✅ Initialized single producer: {self.producer_config.name}")

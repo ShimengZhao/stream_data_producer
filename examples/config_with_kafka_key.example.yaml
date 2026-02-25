@@ -1,0 +1,79 @@
+# Example configuration with Kafka message key enabled
+# This demonstrates how to configure Kafka keys for better message routing
+
+# Global Kafka configuration with key settings
+kafka:
+  bootstrap_servers: "localhost:9092"
+  security_protocol: "SASL_PLAINTEXT"
+  sasl_mechanism: "PLAIN"
+  sasl_username: "user"
+  sasl_password: "pass"
+  default_topic: "ship_telemetry"
+  # Enable Kafka message keys - using ship_id as the key for partition routing
+  key_field: "ship_id"
+  key_strategy: "field"
+
+# Global file output configuration
+file_output:
+  directory: "./data"
+  rolling: "hourly"          # or daily
+
+# Error log configuration
+error_log:
+  directory: "./logs"
+  rolling: "daily"
+  max_age_days: 7
+
+# Data dictionaries
+dictionaries:
+  ships:
+    file: "./data/ships.csv"
+    columns:
+      id: 0          # 第0列是ship_id
+      type: 1        # 第1列是ship_type（可选）
+
+# Single Producer definition
+producer:
+  name: ship-telemetry-producer
+  rate: 2          # 每秒2条消息
+  output: kafka
+  kafka_topic: ship_telemetry_metrics
+  fields:
+    - name: ship_id
+      type: string
+      rule: random_from_dictionary
+      dictionary: ships
+      dictionary_column: id
+    - name: timestamp
+      type: long
+      rule: now
+    - name: latitude
+      type: double
+      rule: random_range
+      min: 30.0
+      max: 45.0
+    - name: longitude
+      type: double
+      rule: random_range
+      min: 120.0
+      max: 140.0
+    - name: speed_knots
+      type: double
+      rule: random_range
+      min: 8.0
+      max: 22.0
+    - name: heading
+      type: double
+      rule: random_range
+      min: 0.0
+      max: 360.0
+    - name: fuel_consumption
+      type: double
+      rule: random_range
+      min: 150.0
+      max: 300.0
+    - name: engine_temp
+      type: double
+      rule: random_range
+      min: 75.0
+      max: 95.0

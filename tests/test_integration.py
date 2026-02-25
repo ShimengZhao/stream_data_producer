@@ -42,38 +42,32 @@ dictionaries:
       id: 0
       name: 1
 
-producers:
-  - name: test-console-producer
-    rate: 2
-    output: console
-    fields:
-      - name: id
-        type: int
-        rule: random_range
-        min: 1
-        max: 100
-      - name: name
-        type: string
-        rule: random_from_list
-        list: ["Alice", "Bob", "Charlie"]
-      - name: timestamp
-        type: long
-        rule: now
-
-  - name: test-file-producer
-    interval: 1s
-    output: file
-    file_path: "./test_data/output.json"
-    fields:
-      - name: value
-        type: double
-        rule: random_range
-        min: 0.0
-        max: 100.0
-      - name: status
-        type: string
-        rule: constant
-        value: "active"
+producer:
+  name: test-producer
+  rate: 2
+  output: console
+  fields:
+    - name: id
+      type: int
+      rule: random_range
+      min: 1
+      max: 100
+    - name: name
+      type: string
+      rule: random_from_list
+      list: ["Alice", "Bob", "Charlie"]
+    - name: timestamp
+      type: long
+      rule: now
+    - name: value
+      type: double
+      rule: random_range
+      min: 0.0
+      max: 100.0
+    - name: status
+      type: string
+      rule: constant
+      value: "active"
 """
     
     with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
@@ -109,22 +103,15 @@ def test_config_loading(temp_config_file):
     """Test configuration loading and parsing"""
     config = load_config(temp_config_file)
     
-    assert len(config.producers) == 2
+    assert config.producer is not None
     assert len(config.dictionaries) == 1
     
-    # Check first producer
-    console_producer = config.producers[0]
-    assert console_producer.name == "test-console-producer"
-    assert console_producer.rate == 2
-    assert console_producer.output.value == "console"
-    assert len(console_producer.fields) == 3
-    
-    # Check second producer
-    file_producer = config.producers[1]
-    assert file_producer.name == "test-file-producer"
-    assert file_producer.interval == "1s"
-    assert file_producer.output.value == "file"
-    assert len(file_producer.fields) == 2
+    # Check producer
+    producer = config.producer
+    assert producer.name == "test-producer"
+    assert producer.rate == 2
+    assert producer.output.value == "console"
+    assert len(producer.fields) == 5
 
 
 def test_dictionary_loading(temp_config_file):
@@ -154,17 +141,22 @@ def test_data_generation(temp_config_file):
     loader = DictionaryLoader()
     generator = DataGenerator(loader)
     
-    # Test console producer fields
-    console_producer = config.producers[0]
-    record = generator.generate_record(console_producer.fields)
+    # Test producer fields
+    producer = config.producer
+    record = generator.generate_record(producer.fields)
     
     assert "id" in record
     assert "name" in record
     assert "timestamp" in record
+    assert "value" in record
+    assert "status" in record
     assert isinstance(record["id"], int)
     assert 1 <= record["id"] <= 100
     assert record["name"] in ["Alice", "Bob", "Charlie"]
     assert isinstance(record["timestamp"], int)  # Should be milliseconds timestamp
+    assert isinstance(record["value"], float)
+    assert 0.0 <= record["value"] <= 100.0
+    assert record["status"] == "active"
 
 
 def test_rate_controller():
@@ -226,10 +218,14 @@ def test_file_output():
         
         output.close()
         
-        # Check that file was created and contains expected data
-        assert os.path.exists(file_path)
+        # For hourly rolling, file name will be modified with timestamp
+        # Look for any JSON file in the directory
+        json_files = [f for f in os.listdir(temp_dir) if f.endswith('.json')]
+        assert len(json_files) >= 1, f"No JSON files found in {temp_dir}"
         
-        with open(file_path, 'r') as f:
+        # Read from the actual file that was created
+        actual_file_path = os.path.join(temp_dir, json_files[0])
+        with open(actual_file_path, 'r') as f:
             lines = f.readlines()
             assert len(lines) == 3
             

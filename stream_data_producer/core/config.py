@@ -68,6 +68,8 @@ class KafkaConfig:
     sasl_username: Optional[str] = None
     sasl_password: Optional[str] = None
     default_topic: str = "telemetry"
+    key_field: Optional[str] = None  # Field name to use as message key
+    key_strategy: str = "field"  # field, random, timestamp, composite, none
 
 
 @dataclass
@@ -141,7 +143,9 @@ def parse_config(config_dict: dict) -> AppConfig:
             sasl_mechanism=kafka_config.get('sasl_mechanism'),
             sasl_username=kafka_config.get('sasl_username'),
             sasl_password=kafka_config.get('sasl_password'),
-            default_topic=kafka_config.get('default_topic', 'telemetry')
+            default_topic=kafka_config.get('default_topic', 'telemetry'),
+            key_field=kafka_config.get('key_field'),
+            key_strategy=kafka_config.get('key_strategy', 'field')
         )
     
     if 'file_output' in config_dict:

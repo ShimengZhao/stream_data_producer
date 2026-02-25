@@ -7,10 +7,12 @@ A configurable, multi-stream data generator for testing and simulation purposes.
 - **Single Producer Architecture**: Simplified data generation with one producer at a time
 - **Flexible Data Generation**: Support for various field types and generation rules
 - **Multiple Output Targets**: Console, file (JSON lines), and Kafka with authentication
+- **Kafka Message Keys**: Configurable message keys for partition routing and ordering
 - **Rate Control**: Configurable message rates or intervals
 - **Monitoring API**: RESTful API for status monitoring
 - **Error Handling**: Comprehensive error logging with data retention
 - **Dictionary Support**: Random data generation from CSV dictionaries
+- **Configuration Examples**: Ready-to-use templates in `examples/` directory
 
 ## Installation
 
@@ -35,10 +37,10 @@ pip install stream-data-producer
 stream-data-producer quick "id:int,name:string,score:double" --rate 10 --output console
 
 # Run with configuration file
-stream-data-producer run --config config.example.yaml
+stream-data-producer run --config examples/config.example.yaml
 
 # Validate configuration
-stream-data-producer validate --config config.example.yaml
+stream-data-producer validate --config examples/config.example.yaml
 
 # Check status of running producers
 stream-data-producer status
@@ -47,6 +49,24 @@ stream-data-producer status
 stream-data-producer update-rate my-producer --rate 50
 stream-data-producer stop my-producer
 stream-data-producer start my-producer
+```
+
+### Using Configuration Examples
+
+The `examples/` directory contains ready-to-use configuration templates:
+
+```bash
+# List available examples
+ls examples/
+
+# Copy basic configuration template
+cp examples/config.example.yaml my_config.yaml
+
+# Copy advanced Kafka key configuration
+cp examples/config_with_kafka_key.example.yaml kafka_config.yaml
+
+# View examples documentation
+cat examples/README.md
 ```
 
 ### Using as a Library
@@ -83,6 +103,9 @@ kafka:
   sasl_username: "user"
   sasl_password: "pass"
   default_topic: "telemetry"
+  # Kafka message key configuration
+  key_field: "ship_id"           # Field to use as message key
+  key_strategy: "field"          # field, random, timestamp, composite, none
 
 # Global file output configuration
 file_output:
@@ -182,6 +205,47 @@ producer:
      value: "1.0.0"
    ```
 
+### Kafka Message Keys
+
+Kafka messages can include keys for partition routing and message ordering:
+
+1. **Field-based Key** (`field` strategy):
+   ```yaml
+   kafka:
+     key_field: "ship_id"
+     key_strategy: "field"
+   ```
+   Uses the specified field value as the message key.
+
+2. **Random Key** (`random` strategy):
+   ```yaml
+   kafka:
+     key_strategy: "random"
+   ```
+   Generates a random UUID for each message.
+
+3. **Timestamp Key** (`timestamp` strategy):
+   ```yaml
+   kafka:
+     key_strategy: "timestamp"
+   ```
+   Uses current timestamp as the message key.
+
+4. **Composite Key** (`composite` strategy):
+   ```yaml
+   kafka:
+     key_field: "ship_id,timestamp"
+     key_strategy: "composite"
+   ```
+   Combines multiple fields with underscore separator.
+
+5. **No Key** (`none` strategy):
+   ```yaml
+   kafka:
+     key_strategy: "none"
+   ```
+   Sends messages without keys.
+
 ### Rate Control Options
 
 You can control the data generation rate in two ways:
@@ -272,6 +336,9 @@ pytest tests/
 # Run specific test file
 pytest tests/test_integration.py
 
+# Run examples validation tests
+pytest tests/test_examples.py
+
 # Run with verbose output
 pytest tests/ -v
 ```
@@ -286,10 +353,13 @@ stream_data_producer/
 │   ├── utils/          # Utility functions
 │   ├── api/           # REST API server (simplified)
 │   └── cli.py         # Command-line interface
+├── examples/          # Configuration examples
+│   ├── README.md      # Examples documentation
+│   ├── config.example.yaml           # Basic configuration template
+│   └── config_with_kafka_key.example.yaml  # Advanced Kafka key configuration
 ├── tests/             # Test suite
 ├── data/              # Sample data files
-├── logs/              # Log directory
-└── config.example.yaml # Example configuration
+└── logs/              # Log directory
 ```
 
 ## Contributing

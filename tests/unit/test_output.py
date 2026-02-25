@@ -94,29 +94,38 @@ class TestFileOutput:
         assert output._current_file_handle is None
         assert output._current_period is None
     
-    def test_send_to_file(self, temp_file_path):
+    def test_send_to_file(self):
         """Test sending data to file"""
-        output = FileOutput(file_path=temp_file_path, rolling="daily")
-        
-        test_data = {
-            "id": 456,
-            "message": "test message",
-            "value": 99.9
-        }
-        
-        success = output.send(test_data)
-        assert success is True
-        
-        # Close the file to flush content
-        output.close()
-        
-        # Check file content
-        with open(temp_file_path, 'r') as f:
-            lines = f.readlines()
-            assert len(lines) == 1
+        # Create fresh temporary directory for this test
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file_path = os.path.join(temp_dir, "test_output.json")
+            output = FileOutput(file_path, rolling="daily")
             
-            parsed_data = json.loads(lines[0].strip())
-            assert parsed_data == test_data
+            test_data = {
+                "id": 456,
+                "message": "test message",
+                "value": 99.9
+            }
+            
+            success = output.send(test_data)
+            assert success is True
+            
+            # Close the file to flush content
+            output.close()
+            
+            # For daily rolling, file name will be modified with date
+            # Look for any JSON file in the directory
+            json_files = [f for f in os.listdir(temp_dir) if f.endswith('.json')]
+            assert len(json_files) == 1, f"Expected 1 JSON file, found {len(json_files)}: {json_files}"
+            
+            # Read from the actual file that was created
+            actual_file_path = os.path.join(temp_dir, json_files[0])
+            with open(actual_file_path, 'r') as f:
+                lines = f.readlines()
+                assert len(lines) == 1
+                
+                parsed_data = json.loads(lines[0].strip())
+                assert parsed_data == test_data
     
     def test_send_multiple_records_to_file(self, temp_file_path):
         """Test sending multiple records to file"""
@@ -287,13 +296,11 @@ class TestKafkaOutput:
             # Check that produce was called correctly
             mock_producer_instance.produce.assert_called_once()
             call_args = mock_producer_instance.produce.call_args
-            # call_args[0] contains positional args: (topic, value=value, callback=callback)
-            assert call_args[0][0] == "test-topic"  # topic is first positional arg
-            # value and callback are keyword arguments
-            assert 'value' in call_args[1]
-            assert json.loads(call_args[1]['value'].decode('utf-8')) == test_data
-            assert 'callback' in call_args[1]
-            assert call_args[1]['callback'] is not None
+            # All arguments are now keyword arguments
+            kwargs = call_args[1]
+            assert kwargs['topic'] == "test-topic"
+            assert json.loads(kwargs['value'].decode('utf-8')) == test_data
+            assert kwargs['callback'] is not None
     
     def test_send_to_kafka_failure(self):
         """Test Kafka send failure handling"""

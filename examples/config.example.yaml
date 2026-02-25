@@ -6,6 +6,25 @@ kafka:
   sasl_username: "user"
   sasl_password: "pass"
   default_topic: "telemetry"
+  # Kafka message key configuration (optional)
+  # Uncomment one of the following strategies:
+  
+  # Strategy 1: Use specific field as key (recommended for ship data)
+  # key_field: "ship_id"
+  # key_strategy: "field"
+  
+  # Strategy 2: Generate random UUID for each message
+  # key_strategy: "random"
+  
+  # Strategy 3: Use timestamp as key
+  # key_strategy: "timestamp"
+  
+  # Strategy 4: Combine multiple fields (comma-separated)
+  # key_field: "ship_id,timestamp"
+  # key_strategy: "composite"
+  
+  # Strategy 5: No key (default behavior)
+  # key_strategy: "none"
 
 # Global file output configuration
 file_output:
@@ -32,6 +51,9 @@ producer:
   rate: 1          # 每秒1条
   output: kafka
   kafka_topic: ship_telemetry   # 覆盖全局topic
+  # Kafka key configuration can also be specified here (overrides global config)
+  # key_field: "ship_id"
+  # key_strategy: "field"
   fields:
     - name: ship_id
       type: string
