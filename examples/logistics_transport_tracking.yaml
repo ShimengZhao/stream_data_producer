@@ -1,0 +1,117 @@
+# 物流运输跟踪示例配置
+# 实时跟踪货物运输状态，包含位置信息、温湿度监控等
+
+# Global Kafka configuration
+kafka:
+  bootstrap_servers: "localhost:9092"
+  security_protocol: "SASL_PLAINTEXT"
+  sasl_mechanism: "PLAIN"
+  sasl_username: "user"
+  sasl_password: "pass"
+  default_topic: "logistics_tracking"
+  # 使用运单号作为Kafka消息key，确保同一批货物的消息路由到相同分区
+  key_field: "tracking_number"
+  key_strategy: "field"
+
+# Global file output configuration
+file_output:
+  directory: "./data"
+  rolling: "hourly"
+
+# Error log configuration
+error_log:
+  directory: "./logs"
+  rolling: "daily"
+  max_age_days: 7
+
+# Data dictionaries
+dictionaries:
+  shipments:
+    file: "./data/shipments.csv"
+    columns:
+      tracking_number: 0  # 运单号
+      origin: 1          # 出发地
+      destination: 2     # 目的地
+      cargo_type: 3      # 货物类型
+  drivers:
+    file: "./data/drivers.csv"
+    columns:
+      id: 0              # 司机ID
+      name: 1            # 司机姓名
+      license_type: 2    # 驾驶证类型
+  vehicles:
+    file: "./data/vehicles.csv"
+    columns:
+      plate: 0           # 车牌号
+      type: 1            # 车辆类型
+      capacity: 2        # 载重能力
+
+# Single Producer definition
+producer:
+  name: logistics-tracking-system
+  rate: 2          # 每秒2条跟踪记录
+  output: kafka
+  kafka_topic: shipment_updates
+  fields:
+    - name: tracking_number
+      type: string
+      rule: random_from_dictionary
+      dictionary: shipments
+      dictionary_column: tracking_number
+    - name: timestamp
+      type: long
+      rule: now
+    - name: vehicle_plate
+      type: string
+      rule: random_from_dictionary
+      dictionary: vehicles
+      dictionary_column: plate
+    - name: driver_id
+      type: string
+      rule: random_from_dictionary
+      dictionary: drivers
+      dictionary_column: id
+    - name: latitude
+      type: double
+      rule: random_range
+      min: 22.0
+      max: 53.0
+    - name: longitude
+      type: double
+      rule: random_range
+      min: 73.0
+      max: 135.0
+    - name: speed
+      type: double
+      rule: random_range
+      min: 0.0
+      max: 120.0
+    - name: fuel_level
+      type: double
+      rule: random_range
+      min: 10.0
+      max: 100.0
+    - name: cargo_temperature
+      type: double
+      rule: random_range
+      min: -20.0
+      max: 30.0
+    - name: humidity
+      type: double
+      rule: random_range
+      min: 30.0
+      max: 80.0
+    - name: shipment_status
+      type: string
+      rule: random_from_list
+      list: ["IN_TRANSIT", "AT_WAREHOUSE", "OUT_FOR_DELIVERY", "DELIVERED", "DELAYED"]
+    - name: estimated_arrival
+      type: long
+      rule: random_range
+      min: 1708886400000
+      max: 1708972800000
+    - name: current_location
+      type: string
+      rule: random_from_dictionary
+      dictionary: shipments
+      dictionary_column: origin

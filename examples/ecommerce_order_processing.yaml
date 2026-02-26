@@ -1,0 +1,110 @@
+# 电商平台订单处理示例配置
+# 实时处理电商订单数据，包含商品信息、用户信息、支付状态等
+
+# Global Kafka configuration
+kafka:
+  bootstrap_servers: "localhost:9092"
+  security_protocol: "SASL_PLAINTEXT"
+  sasl_mechanism: "PLAIN"
+  sasl_username: "user"
+  sasl_password: "pass"
+  default_topic: "ecommerce_orders"
+  # 使用用户ID作为Kafka消息key，确保同一用户的订单路由到相同分区
+  key_field: "user_id"
+  key_strategy: "field"
+
+# Global file output configuration
+file_output:
+  directory: "./data"
+  rolling: "hourly"
+
+# Error log configuration
+error_log:
+  directory: "./logs"
+  rolling: "daily"
+  max_age_days: 7
+
+# Data dictionaries
+dictionaries:
+  products:
+    file: "./data/products.csv"
+    columns:
+      id: 0          # 商品ID
+      name: 1        # 商品名称
+      category: 2    # 商品类别
+      brand: 3       # 品牌
+  users:
+    file: "./data/users.csv"
+    columns:
+      id: 0          # 用户ID
+      name: 1        # 用户姓名
+      city: 2        # 城市
+  couriers:
+    file: "./data/couriers.csv"
+    columns:
+      id: 0          # 快递员ID
+      name: 1        # 快递员姓名
+      company: 2     # 快递公司
+
+# Single Producer definition
+producer:
+  name: ecommerce-order-processor
+  rate: 3          # 每秒3个订单
+  output: kafka
+  kafka_topic: order_events
+  fields:
+    - name: order_id
+      type: string
+      rule: random_from_list
+      list: ["ORD001", "ORD002", "ORD003", "ORD004", "ORD005", "ORD006", "ORD007", "ORD008", "ORD009", "ORD010"]
+    - name: user_id
+      type: string
+      rule: random_from_dictionary
+      dictionary: users
+      dictionary_column: id
+    - name: product_id
+      type: string
+      rule: random_from_dictionary
+      dictionary: products
+      dictionary_column: id
+    - name: product_name
+      type: string
+      rule: random_from_dictionary
+      dictionary: products
+      dictionary_column: name
+    - name: timestamp
+      type: long
+      rule: now
+    - name: quantity
+      type: int
+      rule: random_range
+      min: 1
+      max: 10
+    - name: unit_price
+      type: double
+      rule: random_range
+      min: 15.99
+      max: 899.99
+    - name: total_amount
+      type: double
+      rule: random_range
+      min: 15.99
+      max: 2999.99
+    - name: payment_method
+      type: string
+      rule: random_from_list
+      list: ["CREDIT_CARD", "DEBIT_CARD", "PAYPAL", "ALIPAY", "WECHAT_PAY"]
+    - name: order_status
+      type: string
+      rule: random_from_list
+      list: ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"]
+    - name: shipping_address
+      type: string
+      rule: random_from_dictionary
+      dictionary: users
+      dictionary_column: city
+    - name: courier_id
+      type: string
+      rule: random_from_dictionary
+      dictionary: couriers
+      dictionary_column: id

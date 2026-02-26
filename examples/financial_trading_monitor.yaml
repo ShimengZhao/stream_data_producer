@@ -1,0 +1,92 @@
+# 金融交易监控示例配置
+# 实时监控股票交易数据，包含交易价格、成交量等关键指标
+
+# Global Kafka configuration
+kafka:
+  bootstrap_servers: "localhost:9092"
+  security_protocol: "SASL_PLAINTEXT"
+  sasl_mechanism: "PLAIN"
+  sasl_username: "user"
+  sasl_password: "pass"
+  default_topic: "financial_trading"
+  # 使用股票代码作为Kafka消息key，确保同一股票的消息路由到相同分区
+  key_field: "stock_symbol"
+  key_strategy: "field"
+
+# Global file output configuration
+file_output:
+  directory: "./data"
+  rolling: "hourly"
+
+# Error log configuration
+error_log:
+  directory: "./logs"
+  rolling: "daily"
+  max_age_days: 7
+
+# Data dictionaries
+dictionaries:
+  stocks:
+    file: "./data/stocks.csv"
+    columns:
+      symbol: 0      # 股票代码
+      name: 1        # 公司名称
+      sector: 2      # 行业板块
+  traders:
+    file: "./data/traders.csv"
+    columns:
+      id: 0          # 交易员ID
+      name: 1        # 交易员姓名
+
+# Single Producer definition
+producer:
+  name: financial-trading-monitor
+  rate: 5          # 每秒5笔交易
+  output: kafka
+  kafka_topic: stock_trades
+  fields:
+    - name: trade_id
+      type: string
+      rule: random_from_list
+      list: ["TRD001", "TRD002", "TRD003", "TRD004", "TRD005", "TRD006", "TRD007", "TRD008", "TRD009", "TRD010"]
+    - name: stock_symbol
+      type: string
+      rule: random_from_dictionary
+      dictionary: stocks
+      dictionary_column: symbol
+    - name: company_name
+      type: string
+      rule: random_from_dictionary
+      dictionary: stocks
+      dictionary_column: name
+    - name: trader_id
+      type: string
+      rule: random_from_dictionary
+      dictionary: traders
+      dictionary_column: id
+    - name: timestamp
+      type: long
+      rule: now
+    - name: price
+      type: double
+      rule: random_range
+      min: 10.50
+      max: 500.00
+    - name: volume
+      type: int
+      rule: random_range
+      min: 100
+      max: 10000
+    - name: trade_type
+      type: string
+      rule: random_from_list
+      list: ["BUY", "SELL"]
+    - name: sector
+      type: string
+      rule: random_from_dictionary
+      dictionary: stocks
+      dictionary_column: sector
+    - name: market_status
+      type: string
+      rule: random_from_list
+      list: ["OPEN", "CLOSED", "PRE_OPEN", "POST_CLOSE"]

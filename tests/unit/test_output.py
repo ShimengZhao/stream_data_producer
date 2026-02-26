@@ -127,31 +127,40 @@ class TestFileOutput:
                 parsed_data = json.loads(lines[0].strip())
                 assert parsed_data == test_data
     
-    def test_send_multiple_records_to_file(self, temp_file_path):
+    def test_send_multiple_records_to_file(self):
         """Test sending multiple records to file"""
-        output = FileOutput(file_path=temp_file_path, rolling="daily")
-        
-        records = [
-            {"id": 1, "value": 10.5},
-            {"id": 2, "value": 20.3},
-            {"id": 3, "value": 30.1}
-        ]
-        
-        for record in records:
-            success = output.send(record)
-            assert success is True
-        
-        # Close to flush content
-        output.close()
-        
-        # Check all records are in file
-        with open(temp_file_path, 'r') as f:
-            lines = f.readlines()
-            assert len(lines) == 3
+        # Create isolated temporary directory for this test
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_file_path = os.path.join(temp_dir, "test_output.json")
+            output = FileOutput(file_path=temp_file_path, rolling="daily")
             
-            for i, line in enumerate(lines):
-                parsed_data = json.loads(line.strip())
-                assert parsed_data == records[i]
+            records = [
+                {"id": 1, "value": 10.5},
+                {"id": 2, "value": 20.3},
+                {"id": 3, "value": 30.1}
+            ]
+            
+            for record in records:
+                success = output.send(record)
+                assert success is True
+            
+            # Close to flush content
+            output.close()
+            
+            # For daily rolling, file name will be modified with date
+            # Look for any JSON file in the directory
+            json_files = [f for f in os.listdir(temp_dir) if f.endswith('.json')]
+            assert len(json_files) == 1, f"Expected 1 JSON file, found {len(json_files)}: {json_files}"
+            
+            # Check all records are in the actual file that was created
+            actual_file_path = os.path.join(temp_dir, json_files[0])
+            with open(actual_file_path, 'r') as f:
+                lines = f.readlines()
+                assert len(lines) == 3
+                
+                for i, line in enumerate(lines):
+                    parsed_data = json.loads(line.strip())
+                    assert parsed_data == records[i]
     
     def test_file_output_with_different_rolling_options(self, temp_file_path):
         """Test file output with different rolling options"""
@@ -181,27 +190,36 @@ class TestFileOutput:
             content = f.read()
             assert len(content) > 0
     
-    def test_file_output_with_special_characters(self, temp_file_path):
+    def test_file_output_with_special_characters(self):
         """Test file output with special characters in data"""
-        output = FileOutput(file_path=temp_file_path, rolling="daily")
-        
-        special_data = {
-            "unicode": "测试中文",
-            "special_chars": "!@#$%^&*()",
-            "quotes": '"quoted" text',
-            "newlines": "line1\nline2"
-        }
-        
-        success = output.send(special_data)
-        assert success is True
-        output.close()
-        
-        # Check file content
-        with open(temp_file_path, 'r') as f:
-            content = f.read()
-            # Should be valid JSON despite special characters
-            parsed_data = json.loads(content.strip())
-            assert parsed_data == special_data
+        # Create isolated temporary directory for this test
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_file_path = os.path.join(temp_dir, "test_output.json")
+            output = FileOutput(file_path=temp_file_path, rolling="daily")
+            
+            special_data = {
+                "unicode": "测试中文",
+                "special_chars": "!@#$%^&*()",
+                "quotes": '"quoted" text',
+                "newlines": "line1\nline2"
+            }
+            
+            success = output.send(special_data)
+            assert success is True
+            output.close()
+            
+            # For daily rolling, file name will be modified with date
+            # Look for any JSON file in the directory
+            json_files = [f for f in os.listdir(temp_dir) if f.endswith('.json')]
+            assert len(json_files) == 1, f"Expected 1 JSON file, found {len(json_files)}: {json_files}"
+            
+            # Check file content
+            actual_file_path = os.path.join(temp_dir, json_files[0])
+            with open(actual_file_path, 'r') as f:
+                content = f.read()
+                # Should be valid JSON despite special characters
+                parsed_data = json.loads(content.strip())
+                assert parsed_data == special_data
     
     def test_file_output_directory_creation(self):
         """Test automatic directory creation"""

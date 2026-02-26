@@ -36,11 +36,11 @@ pip install stream-data-producer
 # Quick start with inline schema
 stream-data-producer quick "id:int,name:string,score:double" --rate 10 --output console
 
-# Run with configuration file
-stream-data-producer run --config examples/config.example.yaml
+# Run with ship telemetry configuration
+stream-data-producer run --config examples/ship_telemetry_basic.yaml
 
 # Validate configuration
-stream-data-producer validate --config examples/config.example.yaml
+stream-data-producer validate --config examples/ship_telemetry_basic.yaml
 
 # Check status of running producers
 stream-data-producer status
@@ -53,19 +53,43 @@ stream-data-producer start my-producer
 
 ### Using Configuration Examples
 
-The `examples/` directory contains ready-to-use configuration templates:
+The `examples/` directory contains ready-to-use configuration templates for various domains:
+
+#### Domain-Specific Examples
 
 ```bash
-# List available examples
+# Financial Trading Monitoring (5 msg/sec)
+cp examples/financial_trading_monitor.yaml trading_config.yaml
+
+# E-commerce Order Processing (3 msg/sec)
+cp examples/ecommerce_order_processing.yaml ecommerce_config.yaml
+
+# Logistics Transport Tracking (2 msg/sec)
+cp examples/logistics_transport_tracking.yaml logistics_config.yaml
+
+# Social Media Analytics (10 msg/sec)
+cp examples/social_media_analytics.yaml social_config.yaml
+
+# Healthcare Monitoring (4 msg/sec)
+cp examples/healthcare_monitoring.yaml health_config.yaml
+```
+
+#### Template Examples
+
+```bash
+# List all available examples
 ls examples/
 
-# Copy basic configuration template
-cp examples/config.example.yaml my_config.yaml
+# Copy basic ship telemetry template
+cp examples/ship_telemetry_basic.yaml ship_config.yaml
+
+# Copy ship telemetry with Kafka keys
+cp examples/ship_telemetry_with_keys.yaml ship_key_config.yaml
 
 # Copy advanced Kafka key configuration
 cp examples/config_with_kafka_key.example.yaml kafka_config.yaml
 
-# View examples documentation
+# View detailed examples documentation
 cat examples/README.md
 ```
 
@@ -355,7 +379,13 @@ stream_data_producer/
 │   └── cli.py         # Command-line interface
 ├── examples/          # Configuration examples
 │   ├── README.md      # Examples documentation
-│   ├── config.example.yaml           # Basic configuration template
+│   ├── financial_trading_monitor.yaml      # Financial trading monitoring
+│   ├── ecommerce_order_processing.yaml     # E-commerce order processing
+│   ├── logistics_transport_tracking.yaml   # Logistics transport tracking
+│   ├── social_media_analytics.yaml         # Social media analytics
+│   ├── healthcare_monitoring.yaml          # Healthcare monitoring
+│   ├── ship_telemetry_basic.yaml           # Ship telemetry (basic)
+│   ├── ship_telemetry_with_keys.yaml       # Ship telemetry with Kafka keys
 │   └── config_with_kafka_key.example.yaml  # Advanced Kafka key configuration
 ├── tests/             # Test suite
 ├── data/              # Sample data files

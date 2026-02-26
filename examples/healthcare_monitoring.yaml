@@ -1,0 +1,126 @@
+# 医疗健康监测示例配置
+# 实时监测患者生命体征和医疗设备数据
+
+# Global Kafka configuration
+kafka:
+  bootstrap_servers: "localhost:9092"
+  security_protocol: "SASL_PLAINTEXT"
+  sasl_mechanism: "PLAIN"
+  sasl_username: "user"
+  sasl_password: "pass"
+  default_topic: "health_monitoring"
+  # 使用患者ID作为Kafka消息key，确保同一患者的健康数据路由到相同分区
+  key_field: "patient_id"
+  key_strategy: "field"
+
+# Global file output configuration
+file_output:
+  directory: "./data"
+  rolling: "hourly"
+
+# Error log configuration
+error_log:
+  directory: "./logs"
+  rolling: "daily"
+  max_age_days: 7
+
+# Data dictionaries
+dictionaries:
+  patients:
+    file: "./data/patients.csv"
+    columns:
+      id: 0              # 患者ID
+      name: 1            # 患者姓名
+      age_group: 2       # 年龄组
+      condition: 3       # 病情分类
+  doctors:
+    file: "./data/doctors.csv"
+    columns:
+      id: 0              # 医生ID
+      name: 1            # 医生姓名
+      department: 2      # 科室
+      specialization: 3  # 专业领域
+  medical_devices:
+    file: "./data/medical_devices.csv"
+    columns:
+      id: 0              # 设备ID
+      type: 1            # 设备类型
+      location: 2        # 所在科室
+
+# Single Producer definition
+producer:
+  name: health-monitoring-system
+  rate: 4          # 每秒4条健康监测记录
+  output: kafka
+  kafka_topic: patient_vitals
+  fields:
+    - name: record_id
+      type: string
+      rule: random_from_list
+      list: ["REC001", "REC002", "REC003", "REC004", "REC005", "REC006", "REC007", "REC008", "REC009", "REC010"]
+    - name: patient_id
+      type: string
+      rule: random_from_dictionary
+      dictionary: patients
+      dictionary_column: id
+    - name: doctor_id
+      type: string
+      rule: random_from_dictionary
+      dictionary: doctors
+      dictionary_column: id
+    - name: device_id
+      type: string
+      rule: random_from_dictionary
+      dictionary: medical_devices
+      dictionary_column: id
+    - name: timestamp
+      type: long
+      rule: now
+    - name: heart_rate
+      type: int
+      rule: random_range
+      min: 60
+      max: 120
+    - name: blood_pressure_systolic
+      type: int
+      rule: random_range
+      min: 90
+      max: 180
+    - name: blood_pressure_diastolic
+      type: int
+      rule: random_range
+      min: 60
+      max: 120
+    - name: body_temperature
+      type: double
+      rule: random_range
+      min: 36.0
+      max: 40.0
+    - name: oxygen_saturation
+      type: double
+      rule: random_range
+      min: 95.0
+      max: 100.0
+    - name: respiratory_rate
+      type: int
+      rule: random_range
+      min: 12
+      max: 25
+    - name: glucose_level
+      type: double
+      rule: random_range
+      min: 70.0
+      max: 180.0
+    - name: patient_condition
+      type: string
+      rule: random_from_dictionary
+      dictionary: patients
+      dictionary_column: condition
+    - name: alert_level
+      type: string
+      rule: random_from_list
+      list: ["NORMAL", "WARNING", "CRITICAL", "EMERGENCY"]
+    - name: medication_administered
+      type: string
+      rule: random_from_list
+      list: ["INSULIN", "BETA_BLOCKER", "ACE_INHIBITOR", "STATIN", "NONE"]

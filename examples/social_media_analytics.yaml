@@ -1,0 +1,114 @@
+# 社交媒体实时分析示例配置
+# 实时分析社交媒体用户行为，包含点赞、评论、分享等互动数据
+
+# Global Kafka configuration
+kafka:
+  bootstrap_servers: "localhost:9092"
+  security_protocol: "SASL_PLAINTEXT"
+  sasl_mechanism: "PLAIN"
+  sasl_username: "user"
+  sasl_password: "pass"
+  default_topic: "social_media_analytics"
+  # 使用用户ID作为Kafka消息key，确保同一用户的行为数据路由到相同分区
+  key_field: "user_id"
+  key_strategy: "field"
+
+# Global file output configuration
+file_output:
+  directory: "./data"
+  rolling: "hourly"
+
+# Error log configuration
+error_log:
+  directory: "./logs"
+  rolling: "daily"
+  max_age_days: 7
+
+# Data dictionaries
+dictionaries:
+  users:
+    file: "./data/social_users.csv"
+    columns:
+      id: 0              # 用户ID
+      username: 1        # 用户名
+      location: 2        # 地理位置
+      follower_count: 3  # 粉丝数
+  posts:
+    file: "./data/posts.csv"
+    columns:
+      id: 0              # 帖子ID
+      content_type: 1    # 内容类型
+      category: 2        # 分类标签
+  hashtags:
+    file: "./data/hashtags.csv"
+    columns:
+      tag: 0             # 标签
+      popularity: 1      # 热度等级
+
+# Single Producer definition
+producer:
+  name: social-media-analyzer
+  rate: 10         # 每秒10条社交互动
+  output: kafka
+  kafka_topic: user_interactions
+  fields:
+    - name: interaction_id
+      type: string
+      rule: random_from_list
+      list: ["INT001", "INT002", "INT003", "INT004", "INT005", "INT006", "INT007", "INT008", "INT009", "INT010"]
+    - name: user_id
+      type: string
+      rule: random_from_dictionary
+      dictionary: users
+      dictionary_column: id
+    - name: post_id
+      type: string
+      rule: random_from_dictionary
+      dictionary: posts
+      dictionary_column: id
+    - name: timestamp
+      type: long
+      rule: now
+    - name: interaction_type
+      type: string
+      rule: random_from_list
+      list: ["LIKE", "COMMENT", "SHARE", "SAVE", "FOLLOW", "UNFOLLOW"]
+    - name: engagement_score
+      type: double
+      rule: random_range
+      min: 0.1
+      max: 10.0
+    - name: sentiment_score
+      type: double
+      rule: random_range
+      min: -1.0
+      max: 1.0
+    - name: viral_coefficient
+      type: double
+      rule: random_range
+      min: 0.5
+      max: 5.0
+    - name: reach_count
+      type: int
+      rule: random_range
+      min: 100
+      max: 100000
+    - name: hashtag_used
+      type: string
+      rule: random_from_dictionary
+      dictionary: hashtags
+      dictionary_column: tag
+    - name: user_location
+      type: string
+      rule: random_from_dictionary
+      dictionary: users
+      dictionary_column: location
+    - name: content_category
+      type: string
+      rule: random_from_dictionary
+      dictionary: posts
+      dictionary_column: category
+    - name: time_of_day
+      type: string
+      rule: random_from_list
+      list: ["MORNING", "AFTERNOON", "EVENING", "NIGHT"]
