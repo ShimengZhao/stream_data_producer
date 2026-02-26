@@ -47,5 +47,5 @@ setup(
         "Topic :: Software Development :: Testing",
         "Topic :: System :: Distributed Computing",
     ],
-    url="https://github.com/yourusername/stream-data-producer",
+    url="https://github.com/ShimengZhao/stream-data-producer",
 )
