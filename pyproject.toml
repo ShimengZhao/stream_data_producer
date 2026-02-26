@@ -5,8 +5,19 @@ description = "A configurable single-stream data generator for testing and simul
 authors = [
     {name = "Shimeng Zhao", email = "shimengzhao@example.com"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Testing",
+    "Topic :: System :: Distributed Computing",
+]
+dynamic = ["readme"]
 dependencies = [
     "pyyaml>=6.0",
     "confluent-kafka>=2.0.0",
@@ -29,16 +40,108 @@ dev = [
     "pytest-cov>=4.0.0",
     "black>=22.0.0",
     "flake8>=5.0.0",
+    "build>=1.0.0",
+    "twine>=4.0.0",
+]
+
+all = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=22.0.0",
+    "flake8>=5.0.0",
+    "build>=1.0.0",
+    "twine>=4.0.0",
 ]
 
 [project.scripts]
 stream-data-producer = "stream_data_producer.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/stream-data-producer"
-Repository = "https://github.com/yourusername/stream-data-producer.git"
-Documentation = "https://github.com/yourusername/stream-data-producer#readme"
+Homepage = "https://github.com/ShimengZhao/stream-data-producer"
+Repository = "https://github.com/ShimengZhao/stream-data-producer.git"
+Documentation = "https://github.com/ShimengZhao/stream-data-producer#readme"
+Issues = "https://github.com/ShimengZhao/stream-data-producer/issues"
+Changelog = "https://github.com/ShimengZhao/stream-data-producer/blob/main/CHANGELOG.md"
 
 [build-system]
-requires = ["setuptools>=45", "wheel"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["stream_data_producer*"]
+exclude = ["tests*", "examples*"]
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.md"]}
+
+[tool.black]
+line-length = 88
+target-version = ['py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --cov=stream_data_producer --cov-report=html --cov-report=term-missing"
+testpaths = [
+    "tests",
+]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+[tool.coverage.run]
+source = ["stream_data_producer"]
+omit = [
+    "*/tests/*",
+    "*/venv/*",
+    "*/.venv/*",
+    "setup.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = [
+    "E203",  # whitespace before ':'
+    "W503",  # line break before binary operator
+]
+per-file-ignores = [
+    "__init__.py:F401",
+    "tests/*:S101",
+]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".eggs",
+    "*.egg",
+]
